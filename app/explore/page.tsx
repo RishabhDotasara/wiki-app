@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { ChevronRight, Folder, FileText, Home, RefreshCcw } from "lucide-react";
 import { RebuildRegistryButton } from "@/components/rebuild-button";
+import { ExploreClient } from "@/components/explore-client";
 
 export default async function ExplorePage({
   searchParams,
@@ -38,7 +39,7 @@ export default async function ExplorePage({
 
   // 2. Filter matching pages
   const filteredPages = activeTag 
-    ? allPages.filter(p => p.tags.some(t => t === activeTag || t.startsWith(activeTag + '/')))
+    ? allPages.filter(p => p.tags.some(t => t === activeTag))
     : [];
 
   // 3. Find sub-tags at the current level
@@ -126,37 +127,11 @@ export default async function ExplorePage({
               <Badge variant="secondary" className="px-2">{filteredPages.length} Items</Badge>
            </div>
 
-           {filteredPages.length === 0 ? (
-             <div className="text-center py-32 bg-muted/5 rounded-2xl border border-dashed border-muted-foreground/10 flex flex-col items-center justify-center">
-                <div className="h-16 w-16 rounded-full bg-primary/5 flex items-center justify-center mb-6">
-                  <Folder className="h-8 w-8 text-primary/40" />
-                </div>
-                <h3 className="text-lg font-semibold mb-2">
-                  {activeTag ? "No articles found" : "Explore by Category"}
-                </h3>
-                <p className="text-sm text-muted-foreground max-w-[280px] mx-auto">
-                  {activeTag 
-                    ? `We couldn't find any articles tagged under "${activeTagParts[activeTagParts.length-1]}".` 
-                    : "Select a subcategory from the left to browse the knowledge base curated for that topic."}
-                </p>
-             </div>
-           ) : (
-             <div className="grid gap-4">
-               {filteredPages.map(page => (
-                 <Link key={page.slug} href={`/${page.slug}`}>
-                    <Card className="hover:border-primary/40 transition-colors shadow-sm group">
-                      <CardHeader className="py-4">
-                        <div className="flex items-center justify-between">
-                          <CardTitle className="text-lg group-hover:text-primary transition-colors">{page.title}</CardTitle>
-                          <Badge variant="outline" className="text-[10px] uppercase font-bold text-muted-foreground/60 tracking-wider">Article</Badge>
-                        </div>
-                        <CardDescription className="line-clamp-2">Tagged with {page.tags.join(', ')}</CardDescription>
-                      </CardHeader>
-                    </Card>
-                 </Link>
-               ))}
-             </div>
-           )}
+           <ExploreClient 
+             articles={filteredPages} 
+             activeTag={activeTag} 
+             activeTagParts={activeTagParts} 
+           />
         </main>
       </div>
     </div>
