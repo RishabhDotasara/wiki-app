@@ -60,16 +60,19 @@ export default async function QueueDetailPage({ params }: { params: Promise<{ id
     if (comment) await commentOnPullRequest(pullNumber, `Admin Rejected: ${comment}`);
     await closePullRequest(pullNumber);
     
-    const editorEmail = await getEditorEmailFromPR(pr.body);
-    if (editorEmail) {
-       await addNotification(editorEmail, {
-          id: `notif-${Date.now()}`,
-          status: 'rejected',
-          articleTitle: pr.title.replace('Suggested Edit: ', ''),
-          comment: comment || "No reason provided.",
-          timestamp: new Date().toISOString()
-       });
-    }
+     const editorEmail = await getEditorEmailFromPR(pr.body);
+     if (editorEmail) {
+        const slug = pr.title.replace('Suggested Edit: ', '').toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, "");
+        await addNotification(editorEmail, {
+           id: `notif-${Date.now()}`,
+           status: 'rejected',
+           articleTitle: pr.title.replace('Suggested Edit: ', ''),
+           comment: comment || "No reason provided.",
+           timestamp: new Date().toISOString(),
+           branchName: pr.head.ref,
+           slug: slug
+        });
+     }
 
     redirect("/queue");
   }

@@ -2,9 +2,12 @@ import { getCurrentUser } from "@/lib/auth";
 import { listPullRequests, getUserNotifications } from "@/lib/github";
 import { settleNotificationAction } from "@/lib/actions";
 import { redirect } from "next/navigation";
+import { cn } from "@/lib/utils";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
 import { formatDistanceToNow } from "date-fns";
-import { CheckCircle2, XCircle, Bell } from "lucide-react";
+import { CheckCircle2, XCircle, Bell, Pencil } from "lucide-react";
+import { SettleButton } from "@/components/settle-button";
 
 export default async function QueuePage() {
   const user = await getCurrentUser();
@@ -42,15 +45,24 @@ export default async function QueuePage() {
                       Your request for <span className="font-bold underline">"{n.articleTitle}"</span> was {n.status}.
                     </p>
                     {n.comment && <p className="text-sm text-muted-foreground mt-1 bg-muted/30 p-2 rounded italic">Admin: {n.comment}</p>}
+                    
+                    {n.status === 'rejected' && n.slug && n.branchName && (
+                      <div className="mt-3">
+                        <Button asChild size="sm" variant="outline" className="h-7 text-xs gap-2">
+                           <Link href={`/${n.slug}?edit=true&branch=${n.branchName}`}>
+                             <Pencil className="h-3 w-3" /> Revise & Re-submit
+                           </Link>
+                        </Button>
+                      </div>
+                    )}
+
                     <p className="text-[10px] text-muted-foreground mt-2 uppercase tracking-wide">
                       {formatDistanceToNow(new Date(n.timestamp))} ago
                     </p>
                   </div>
                 </div>
                 <form action={settleNotificationAction.bind(null, n.id)}>
-                  <button className="text-xs font-semibold text-muted-foreground hover:text-primary transition-colors border px-2 py-1 rounded bg-muted/20 hover:bg-muted/40">
-                    Settle
-                  </button>
+                   <SettleButton />
                 </form>
               </div>
             ))}
@@ -69,27 +81,30 @@ export default async function QueuePage() {
           </div>
         ) : (
           <div className="grid gap-4">
-            {myPrs.map(pr => (
-              <Link key={pr.id} href={`/queue/${pr.number}`} className="block block group">
-                <div className="p-6 rounded-xl border bg-card hover:border-primary/50 transition-colors shadow-sm flex items-start justify-between">
-                   <div>
-                     <h3 className="text-lg font-semibold text-primary/90 group-hover:text-primary mb-1">
-                       {pr.title}
-                     </h3>
-                     <div className="flex gap-4 text-sm text-muted-foreground mt-2">
-                       <span>#{pr.number}</span>
-                       <span>•</span>
-                       <span>Branch: <code className="text-xs bg-muted/60 px-1 py-0.5 rounded">{pr.head.ref}</code></span>
-                       <span>•</span>
-                       <span>Opened {formatDistanceToNow(new Date(pr.created_at))} ago</span>
+            {myPrs.map(pr => {
+              const ItemWrapper = isEditor ? "div" : Link;
+              return (
+                <ItemWrapper key={pr.id} href={`/queue/${pr.number}`} className={cn("block group", isEditor ? "" : "hover:border-primary/50 transition-colors")}>
+                  <div className="p-6 rounded-xl border bg-card shadow-sm flex items-start justify-between">
+                     <div>
+                       <h3 className={cn("text-lg font-semibold text-primary/90 mb-1", !isEditor && "group-hover:text-primary")}>
+                         {pr.title}
+                       </h3>
+                       <div className="flex gap-4 text-sm text-muted-foreground mt-2">
+                         <span>#{pr.number}</span>
+                         <span>•</span>
+                         <span>Branch: <code className="text-xs bg-muted/60 px-1 py-0.5 rounded">{pr.head.ref}</code></span>
+                         <span>•</span>
+                         <span>Opened {formatDistanceToNow(new Date(pr.created_at))} ago</span>
+                       </div>
                      </div>
-                   </div>
-                   <div className="bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 border border-yellow-500/20 px-3 py-1 text-xs uppercase font-bold rounded-full">
-                     Pending Review
-                   </div>
-                </div>
-              </Link>
-            ))}
+                     <div className="bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 border border-yellow-500/20 px-3 py-1 text-xs uppercase font-bold rounded-full">
+                       Pending
+                     </div>
+                  </div>
+                </ItemWrapper>
+              );
+            })}
           </div>
         )}
       </section>

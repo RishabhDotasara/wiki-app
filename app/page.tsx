@@ -88,50 +88,35 @@ export default async function HomePage() {
            </form>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-start">
-          <div className="md:col-span-3 space-y-4">
-            <h2 className="text-xl font-semibold tracking-tight">Essential Guides</h2>
-            
-            {pages.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No articles found in the repository.</p>
-            ) : (
-              <div className="grid gap-4">
-                {pages.map(article => (
-                  <Card key={article.slug} className="cursor-pointer hover:bg-muted/50 transition-colors shadow-sm group">
-                    <Link href={`/${article.slug}`} className="block">
-                      <CardHeader className="py-4">
-                        <div className="flex items-center justify-between gap-4 mb-1">
-                          <CardTitle className="text-lg group-hover:text-primary transition-colors">{article.frontmatter.title || article.title}</CardTitle>
-                          <span className="text-xs text-muted-foreground whitespace-nowrap">{article.frontmatter.date || "Unknown Date"}</span>
-                        </div>
-                        <CardDescription>{article.excerpt}</CardDescription>
-                      </CardHeader>
-                      <CardContent className="py-4 pt-0">
-                        <div className="flex flex-wrap gap-2">
-                           {(article.frontmatter.tags || []).map((tag: string) => (
-                             <Badge key={tag} variant="secondary" className="text-xs px-1.5 py-0 font-normal">{tag}</Badge>
-                           ))}
-                        </div>
-                      </CardContent>
-                    </Link>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </div>
+        <div className="space-y-4">
+          <h2 className="text-xl font-semibold tracking-tight">Essential Guides</h2>
           
-          <div className="space-y-4">
-            <h2 className="text-xl font-semibold tracking-tight">Popular Tags</h2>
-            <Card className="shadow-sm">
-              <CardContent className="p-4 flex flex-wrap gap-2">
-                 {popularTags.map(tag => (
-                   <Badge key={tag.name} variant="outline" className="cursor-pointer hover:bg-muted font-normal">
-                     {tag.name} <span className="ml-1.5 text-xs text-muted-foreground">{tag.count}</span>
-                   </Badge>
-                 ))}
-              </CardContent>
-            </Card>
-          </div>
+          {pages.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No articles found in the repository.</p>
+          ) : (
+            <div className="grid gap-4">
+              {pages.map(article => (
+                <Card key={article.slug} className="cursor-pointer hover:bg-muted/50 transition-colors shadow-sm group">
+                  <Link href={`/${article.slug}`} className="block">
+                    <CardHeader className="py-4">
+                      <div className="flex items-center justify-between gap-4 mb-1">
+                        <CardTitle className="text-lg group-hover:text-primary transition-colors">{article.frontmatter.title || article.title}</CardTitle>
+                        <span className="text-xs text-muted-foreground whitespace-nowrap">{article.frontmatter.date || "Unknown Date"}</span>
+                      </div>
+                      <CardDescription>{article.excerpt}</CardDescription>
+                    </CardHeader>
+                    <CardContent className="py-4 pt-0">
+                      <div className="flex flex-wrap gap-2">
+                         {(article.frontmatter.tags || []).map((tag: string) => (
+                           <Badge key={tag} variant="secondary" className="text-xs px-1.5 py-0 font-normal">{tag}</Badge>
+                         ))}
+                      </div>
+                    </CardContent>
+                  </Link>
+                </Card>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>

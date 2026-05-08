@@ -257,8 +257,8 @@ export async function listPagesWithTags(): Promise<(PageMeta & { tags: string[] 
  *
  * @param slug — e.g. "admissions-process"
  */
-export async function getPage(slug: string): Promise<Page> {
-  const data = await apiFetch<GitHubFileContent>(filePath(slug));
+export async function getPage(slug: string, branch: string = CONFIG.branch): Promise<Page> {
+  const data = await apiFetch<GitHubFileContent>(`${filePath(slug)}?ref=${branch}`);
 
   return {
     slug,
@@ -638,6 +638,8 @@ export interface WikiNotification {
   articleTitle: string;
   comment?: string;
   timestamp: string;
+  branchName?: string;
+  slug?: string;
 }
 
 function notifPath(email: string) {

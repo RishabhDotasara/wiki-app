@@ -16,7 +16,7 @@ export default async function ArticlePage({
   searchParams,
 }: {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ edit?: string }>;
+  searchParams: Promise<{ edit?: string; branch?: string }>;
 }) {
   const p = await params;
   const sp = await searchParams;
@@ -33,7 +33,7 @@ export default async function ArticlePage({
   if (p.slug !== "new-article") {
     try {
       const [page, mediaFiles] = await Promise.all([
-        getPage(p.slug),
+        getPage(p.slug, sp.branch),
         (await import("@/lib/github")).listMediaFiles(p.slug)
       ]);
       rawMarkdown = page.body;

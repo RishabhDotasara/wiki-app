@@ -37,11 +37,9 @@ export default async function ExplorePage({
   }
 
   // 2. Filter matching pages
-  const filteredPages = allPages.filter(p => {
-    if (!activeTag) return true; // Show all if no tag selected? Or show nothing? 
-    // Usually show everything inside the selected branch
-    return p.tags.some(t => t === activeTag || t.startsWith(activeTag + '/'));
-  });
+  const filteredPages = activeTag 
+    ? allPages.filter(p => p.tags.some(t => t === activeTag || t.startsWith(activeTag + '/')))
+    : [];
 
   // 3. Find sub-tags at the current level
   const subTags = Array.from(tagMap).filter(t => {
@@ -122,16 +120,25 @@ export default async function ExplorePage({
         {/* Right: Articles List */}
         <main className="md:col-span-3 space-y-6">
            <div className="flex items-center justify-between border-b pb-4">
-              <h2 className="text-xl font-semibold">
-                {activeTag ? `Articles in "${activeTagParts[activeTagParts.length-1]}"` : "All Articles"}
+               <h2 className="text-xl font-semibold">
+                {activeTag ? `Articles in "${activeTagParts[activeTagParts.length-1]}"` : "Recent Documentation"}
               </h2>
               <Badge variant="secondary" className="px-2">{filteredPages.length} Items</Badge>
            </div>
 
            {filteredPages.length === 0 ? (
-             <div className="text-center py-24 bg-muted/10 rounded-xl border border-dashed">
-                <FileText className="h-10 w-10 mx-auto text-muted-foreground/30 mb-4" />
-                <p className="text-muted-foreground">No articles match this criteria.</p>
+             <div className="text-center py-32 bg-muted/5 rounded-2xl border border-dashed border-muted-foreground/10 flex flex-col items-center justify-center">
+                <div className="h-16 w-16 rounded-full bg-primary/5 flex items-center justify-center mb-6">
+                  <Folder className="h-8 w-8 text-primary/40" />
+                </div>
+                <h3 className="text-lg font-semibold mb-2">
+                  {activeTag ? "No articles found" : "Explore by Category"}
+                </h3>
+                <p className="text-sm text-muted-foreground max-w-[280px] mx-auto">
+                  {activeTag 
+                    ? `We couldn't find any articles tagged under "${activeTagParts[activeTagParts.length-1]}".` 
+                    : "Select a subcategory from the left to browse the knowledge base curated for that topic."}
+                </p>
              </div>
            ) : (
              <div className="grid gap-4">
