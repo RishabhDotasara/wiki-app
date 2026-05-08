@@ -82,6 +82,9 @@ export function MediaManager({ slug, initialMedia = [] }: MediaManagerProps) {
              <div key={m.url} className="relative group rounded-md border border-border/50 overflow-hidden bg-muted/10 p-2 flex flex-col gap-2 shadow-sm">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={m.url} alt={m.name} className="h-24 w-full object-cover rounded bg-muted/40" />
+                <div className="text-[10px] text-muted-foreground truncate font-medium px-0.5 mt-1" title={m.name}>
+                   {m.name}
+                </div>
                 <Button 
                   variant="outline" 
                   size="sm" 

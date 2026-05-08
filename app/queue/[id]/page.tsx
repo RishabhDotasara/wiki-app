@@ -21,6 +21,21 @@ export default async function QueueDetailPage({ params }: { params: Promise<{ id
     const pr = await getPullRequest(pullNumber);
     await mergePullRequest(pullNumber, "Approved by Admin via InstiWiki");
     
+    // Update Registry after merge
+    const slug = pr.title.replace('Suggested Edit: ', '').toLowerCase().replace(/[^a-z0-9]+/g, "-");
+    try {
+      const { getPage, updateRegistryEntry } = await import("@/lib/github");
+      const { body } = await getPage(slug);
+      const { data } = (await import("gray-matter")).default(body);
+      await updateRegistryEntry(slug, {
+        title: data.title || pr.title.replace('Suggested Edit: ', ''),
+        tags: data.tags || [],
+        lastUpdated: new Date().toISOString()
+      });
+    } catch (e) {
+      console.error("Registry update failed after merge", e);
+    }
+
     const editorEmail = await getEditorEmailFromPR(pr.body);
     if (editorEmail) {
        await addNotification(editorEmail, {

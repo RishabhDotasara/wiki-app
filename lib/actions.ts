@@ -33,6 +33,15 @@ export async function saveArticleAction(
 
   if (isAdmin) {
     const result = await upsertPage(title, fileContent, user.name);
+    
+    // Automatically update the scalable registry
+    const { updateRegistryEntry } = await import("./github");
+    await updateRegistryEntry(result.slug, {
+      title,
+      tags,
+      lastUpdated: new Date().toISOString()
+    });
+
     revalidatePath("/");
     revalidatePath(`/${result.slug}`);
     return { success: true, slug: result.slug, isQueued: false };

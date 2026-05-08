@@ -4,7 +4,9 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { listPages, getPage } from '@/lib/github';
 import { getCurrentUser, canEdit } from '@/lib/auth';
-import { Pencil, Plus } from 'lucide-react';
+import { Pencil, Plus, RefreshCcw } from 'lucide-react';
+import { revalidatePath } from 'next/cache';
+import { RebuildRegistryButton } from '@/components/rebuild-button';
 import matter from 'gray-matter';
 import { popularTags } from '@/lib/mock-data'; // Keeping tags static for UI demo
 
@@ -13,26 +15,33 @@ export default async function HomePage() {
   const isEditor = await canEdit(user);
 
   let pages: any[] = [];
+  let popularTags: { name: string, count: number }[] = [];
   let errorMsg = null;
 
   try {
-    const pagesMeta = await listPages();
-    // Fetch top 10 for recent parsing
-    pages = await Promise.all(
-      pagesMeta.slice(0, 10).map(async (p) => {
-        try {
-          const fullPage = await getPage(p.slug);
-          const parsed = matter(fullPage.body || "");
-          return { 
-            ...p, 
-            frontmatter: parsed.data || {}, 
-            excerpt: parsed.content.replace(/^#+ .*\n+/m, '').substring(0, 120) + '...' 
-          };
-        } catch (e) {
-          return { ...p, frontmatter: {}, excerpt: "Could not load preview." };
-        }
-      })
-    );
+    const { getRegistry } = await import('@/lib/github');
+    const registry = await getRegistry();
+    
+    // Filter for articles tagged with "Guide"
+    pages = Object.entries(registry.articles)
+      .map(([slug, data]) => ({ slug, frontmatter: data }))
+      .filter(art => art.frontmatter.tags.some(t => t.toLowerCase() === "guide"))
+      .sort((a, b) => new Date(b.frontmatter.lastUpdated).getTime() - new Date(a.frontmatter.lastUpdated).getTime())
+      .slice(0, 10);
+
+    // Dynamic Popular Tags from Registry
+    const tagCounts: Record<string, number> = {};
+    Object.values(registry.articles).forEach(art => {
+      art.tags.forEach(t => {
+        tagCounts[t] = (tagCounts[t] || 0) + 1;
+      });
+    });
+
+    popularTags = Object.entries(tagCounts)
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 15);
+
   } catch (err: any) {
     errorMsg = err.message || "Failed to load from GitHub.";
   }
@@ -60,13 +69,28 @@ export default async function HomePage() {
           <CardContent className="p-6">
             <h3 className="font-semibold text-destructive">GitHub API Error</h3>
             <p className="text-sm mt-2">{errorMsg}</p>
-            <p className="text-xs mt-2 opacity-80">Make sure your GitHub token in 'lib/github.ts' is valid and has read/write permissions.</p>
           </CardContent>
         </Card>
+      ) : pages.length === 0 ? (
+        <div className="text-center py-24 bg-muted/20 border border-dashed rounded-2xl">
+           <h2 className="text-xl font-semibold mb-2">Wiki Registry Not Initialized</h2>
+           <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+             It looks like the new scalable index hasn't been created yet. 
+             Click below to scan your repository and initialize the Wiki registry.
+           </p>
+           <form action={async () => {
+             "use server";
+             const { rebuildRegistry } = await import("@/lib/github");
+             await rebuildRegistry();
+             revalidatePath("/");
+           }}>
+             <RebuildRegistryButton />
+           </form>
+        </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-start">
           <div className="md:col-span-3 space-y-4">
-            <h2 className="text-xl font-semibold tracking-tight">Recent Articles</h2>
+            <h2 className="text-xl font-semibold tracking-tight">Essential Guides</h2>
             
             {pages.length === 0 ? (
               <p className="text-sm text-muted-foreground">No articles found in the repository.</p>

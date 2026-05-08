@@ -57,6 +57,7 @@ export default async function ArticlePage({
       <ArticleEditor 
         initialTitle={frontmatter.title || p.slug.split('-').join(' ')} 
         initialContent={contentBody} 
+        initialTags={Array.isArray(frontmatter.tags) ? frontmatter.tags : []}
         slug={p.slug}
         initialMedia={initialMedia} 
       />

@@ -1,8 +1,10 @@
+import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeSlug from 'rehype-slug';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/cjs/styles/prism';
+import { Info, Lightbulb, CircleAlert, TriangleAlert, OctagonAlert } from "lucide-react";
 
 export function extractHeadings(markdown: string) {
   const headingRegex = /^(#{2,3})\s+(.+)$/gm;
@@ -46,9 +48,81 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
           ul: ({node, ...props}) => <ul className="my-6 ml-6 list-disc space-y-2 [&>li]:mt-2" {...props} />,
           ol: ({node, ...props}) => <ol className="my-6 ml-6 list-decimal space-y-2 [&>li]:mt-2" {...props} />,
           li: ({node, ...props}) => <li className="leading-7" {...props} />,
-          blockquote: ({node, ...props}) => (
-            <blockquote className="mt-6 border-l-4 border-primary/40 pl-6 italic text-muted-foreground bg-muted/30 py-2 rounded-r-md shadow-sm" {...props} />
-          ),
+          blockquote: ({ children, ...props }) => {
+            const childrenArray = React.Children.toArray(children);
+            
+            // Helper to find the first text string deep in the children tree
+            const findFirstText = (nodes: any[]): { text: string, node: any, index: number } | null => {
+              for (const [i, node] of nodes.entries()) {
+                if (typeof node === 'string' && node.trim().length > 0) return { text: node.trim(), node, index: i };
+                if (node?.props?.children) {
+                  const found = findFirstText(React.Children.toArray(node.props.children));
+                  if (found) return found;
+                }
+              }
+              return null;
+            };
+
+            const firstTextInfo = findFirstText(childrenArray);
+            let alertType: string | null = null;
+            let finalChildren: React.ReactNode = children;
+
+            if (firstTextInfo) {
+              const match = firstTextInfo.text.match(/^\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]/i);
+              if (match) {
+                alertType = match[1].toUpperCase();
+
+                // Advanced replacement: we need to find the specific node and strip the tag
+                const rewriteChildren = (nodes: any[]): any[] => {
+                   return nodes.map((node, i) => {
+                     if (typeof node === 'string' && node.trim() === firstTextInfo.text) {
+                       return node.replace(/^\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]\s*/i, "");
+                     }
+                     if (node?.props?.children) {
+                       return React.cloneElement(node, {
+                         ...node.props,
+                         children: rewriteChildren(React.Children.toArray(node.props.children))
+                       });
+                     }
+                     return node;
+                   });
+                };
+
+                finalChildren = rewriteChildren(childrenArray);
+              }
+            }
+
+            if (alertType) {
+              const styles: any = {
+                NOTE: { border: "border-blue-500", bg: "bg-blue-500/5", icon: Info, color: "text-blue-500", label: "Note" },
+                TIP: { border: "border-emerald-500", bg: "bg-emerald-500/5", icon: Lightbulb, color: "text-emerald-500", label: "Tip" },
+                IMPORTANT: { border: "border-purple-500", bg: "bg-purple-500/5", icon: CircleAlert, color: "text-purple-500", label: "Important" },
+                WARNING: { border: "border-amber-500", bg: "bg-amber-500/5", icon: TriangleAlert, color: "text-amber-500", label: "Warning" },
+                CAUTION: { border: "border-red-500", bg: "bg-red-500/5", icon: OctagonAlert, color: "text-red-500", label: "Caution" }
+              };
+
+              const style = styles[alertType];
+              const Icon = style.icon;
+
+              return (
+                <div className={`mt-6 border-l-4 ${style.border} ${style.bg} px-6 py-4 rounded-r-lg shadow-sm relative ring-1 ring-inset ring-foreground/5`}>
+                  <div className={`flex items-center gap-2 mb-2 font-bold text-sm tracking-wide uppercase ${style.color}`}>
+                    {Icon && <Icon className="h-4 w-4 shrink-0" />}
+                    {style.label}
+                  </div>
+                  <div className="text-foreground/90 prose-p:my-0 [&_p]:m-0">
+                    {finalChildren}
+                  </div>
+                </div>
+              );
+            }
+
+            return (
+              <blockquote className={`mt-6 border-l-4 border-primary/40 pl-6 italic text-muted-foreground bg-muted/30 py-2 rounded-r-md shadow-sm`} {...props}>
+                {children}
+              </blockquote>
+            );
+          },
           hr: ({node, ...props}) => <hr className="my-8 border-muted" {...props} />,
           table: ({node, ...props}) => (
             <div className="my-6 w-full overflow-y-auto rounded-lg border shadow-sm max-w-full">
@@ -60,7 +134,11 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
           tr: ({node, ...props}) => <tr className="transition-colors hover:bg-muted/30" {...props} />,
           th: ({node, ...props}) => <th className="h-10 px-4 align-middle font-medium" {...props} />,
           td: ({node, ...props}) => <td className="p-4 align-middle" {...props} />,
-          pre: ({node, ...props}) => <div {...props} />, // Discard default <pre> because SyntaxHighlighter injects it
+          pre: ({node, ...props}: any) => {
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            const { ref, ...rest } = props;
+            return <div {...rest} />;
+          },
           code: ({node, className, children, ...props}: any) => {
             const match = /language-(\w+)/.exec(className || '');
             return match ? (

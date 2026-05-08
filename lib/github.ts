@@ -181,15 +181,14 @@ async function coreFetch<T>(
 
   if (!res.ok) {
     const text = await res.text();
-    console.error(`[GitHub API Error] ${res.status}: ${text}`);
     
-    let errMessage = res.statusText;
-    try {
-       const err = JSON.parse(text) as GitHubErrorBody;
-       errMessage = err.message ?? res.statusText;
-    } catch (e) {}
+    // Silence 404s for files that might not exist yet (like registry/notifications)
+    // We KEEP the "404" string in the message because other functions (upsert/upload) use it to detect new files!
+    if (res.status === 404) {
+      throw new Error("GitHub API error 404: NOT_FOUND");
+    }
 
-    throw new Error(`GitHub API error ${res.status}: ${errMessage}`);
+    console.error(`[GitHub API Error] ${res.status}: ${text}`);
   }
 
   // Special case: Diff API returns raw text, not JSON
@@ -230,6 +229,26 @@ export async function listPages(): Promise<PageMeta[]> {
       htmlUrl: item.html_url,
       downloadUrl: item.download_url,
     }));
+}
+
+/**
+ * Enhanced listPages that also parses tags from frontmatter.
+ * Useful for building the tag explorer.
+ */
+export async function listPagesWithTags(): Promise<(PageMeta & { tags: string[] })[]> {
+  const meta = await listPages();
+  const pages = await Promise.all(
+    meta.map(async (p) => {
+      try {
+        const full = await getPage(p.slug);
+        const { data } = (await import("gray-matter")).default(full.body);
+        return { ...p, tags: data.tags || [] };
+      } catch (e) {
+        return { ...p, tags: [] };
+      }
+    })
+  );
+  return pages;
 }
 
 /**
@@ -672,6 +691,90 @@ export async function settleNotification(email: string, notifId: string): Promis
       message: `notify: settle ${notifId}`,
       content: toBase64(JSON.stringify(updated, null, 2)),
       sha: res.sha,
+      branch: CONFIG.branch
+    })
+  });
+}
+
+// ─── REGISTRY SYSTEM (SCALABILITY) ───────────────────────────────────────────
+
+export interface RegistryEntry {
+  title: string;
+  tags: string[];
+  lastUpdated: string;
+}
+
+export interface WikiRegistry {
+  articles: Record<string, RegistryEntry>;
+}
+
+const REGISTRY_PATH = "registry.json";
+
+/** Get the current wiki registry */
+export async function getRegistry(): Promise<WikiRegistry> {
+  try {
+    const res = await apiFetch<GitHubFileContent>(REGISTRY_PATH);
+    return JSON.parse(fromBase64(res.content));
+  } catch (e: any) {
+    // If it's a 404, we return an empty registry structure
+    return { articles: {} };
+  }
+}
+
+/** Update a single entry in the registry */
+export async function updateRegistryEntry(slug: string, entry: RegistryEntry): Promise<void> {
+  const registry = await getRegistry();
+  registry.articles[slug] = entry;
+
+  let sha;
+  try {
+    const res = await apiFetch<GitHubFileContent>(REGISTRY_PATH);
+    sha = res.sha;
+  } catch (e) {}
+
+  await apiFetch(REGISTRY_PATH, {
+    method: 'PUT',
+    body: JSON.stringify({
+      message: `registry: update ${slug}`,
+      content: toBase64(JSON.stringify(registry, null, 2)),
+      sha,
+      branch: CONFIG.branch
+    })
+  });
+}
+
+/** 
+ * Rebuild the entire registry from scratch! 
+ */
+export async function rebuildRegistry(): Promise<void> {
+  const meta = await listPages();
+  const articles: Record<string, RegistryEntry> = {};
+  
+  // Sequential to avoid rate limits during rebuild
+  for (const p of meta) {
+    try {
+      const full = await getPage(p.slug);
+      const parsed = (await import("gray-matter")).default(full.body);
+      articles[p.slug] = {
+        title: parsed.data.title || p.title,
+        tags: parsed.data.tags || [],
+        lastUpdated: parsed.data.date || new Date().toISOString()
+      };
+    } catch (e) {}
+  }
+
+  let sha;
+  try {
+    const res = await apiFetch<GitHubFileContent>(REGISTRY_PATH);
+    sha = res.sha;
+  } catch (e) {}
+
+  await apiFetch(REGISTRY_PATH, {
+    method: 'PUT',
+    body: JSON.stringify({
+      message: "registry: full rebuild",
+      content: toBase64(JSON.stringify({ articles }, null, 2)),
+      sha,
       branch: CONFIG.branch
     })
   });
