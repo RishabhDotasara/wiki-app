@@ -40,10 +40,10 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
         remarkPlugins={[remarkGfm]}
         rehypePlugins={[rehypeSlug]}
         components={{
-          h1: ({node, ...props}) => <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight mt-12 mb-6" {...props} />,
-          h2: ({node, ...props}) => <h2 className="scroll-m-20 border-b pb-2 text-3xl font-semibold tracking-tight mt-12 mb-4 first:mt-0" {...props} />,
-          h3: ({node, ...props}) => <h3 className="scroll-m-20 text-2xl font-semibold tracking-tight mt-8 mb-4" {...props} />,
-          h4: ({node, ...props}) => <h4 className="scroll-m-20 text-xl font-semibold tracking-tight mt-6 mb-3" {...props} />,
+          h1: ({node, ...props}) => <h1 className="scroll-m-20 text-3xl font-extrabold tracking-tight mt-10 mb-5" {...props} />,
+          h2: ({node, ...props}) => <h2 className="scroll-m-20 border-b pb-2 text-2xl font-bold tracking-tight mt-10 mb-4 first:mt-0" {...props} />,
+          h3: ({node, ...props}) => <h3 className="scroll-m-20 text-xl font-semibold tracking-tight mt-8 mb-3" {...props} />,
+          h4: ({node, ...props}) => <h4 className="scroll-m-20 text-lg font-semibold tracking-tight mt-6 mb-2" {...props} />,
           p: ({node, ...props}) => <p className="leading-7 [&:not(:first-child)]:mt-6" {...props} />,
           a: ({node, ...props}) => <a className="font-medium text-primary underline underline-offset-4 decoration-primary/30 hover:decoration-primary transition-colors" {...props} />,
           ul: ({node, ...props}) => <ul className="my-6 ml-6 list-disc space-y-2 [&>li]:mt-2" {...props} />,

@@ -19,7 +19,7 @@ export default async function QueueDetailPage({ params }: { params: Promise<{ id
     const { getEditorEmailFromPR } = await import("@/lib/actions");
     
     const pr = await getPullRequest(pullNumber);
-    await mergePullRequest(pullNumber, "Approved by Admin via InstiWiki");
+    await mergePullRequest(pullNumber, "Approved by Admin via Campuslores");
     
     // Update Registry after merge
     const slug = pr.title.replace('Suggested Edit: ', '').toLowerCase().replace(/[^a-z0-9]+/g, "-");

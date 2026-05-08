@@ -11,7 +11,7 @@ export async function Navbar() {
     <nav className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="mx-auto flex h-14 max-w-5xl items-center gap-4 px-4 sm:px-6">
         <Link href="/" className="flex items-center gap-2 font-bold text-lg md:text-xl">
-          InstiWiki
+          Campuslores
         </Link>
         <div className="flex flex-1 items-center justify-start ml-2 md:ml-4">
           <Link 
