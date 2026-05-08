@@ -93,8 +93,10 @@ export default async function ArticlePage({
 
         {/* Article Header */}
         <div>
-          <div className="flex items-center justify-between gap-4">
-            <h1 className="text-3xl font-bold tracking-tight lg:text-4xl">{displayTitle}</h1>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <h1 className="text-2xl font-bold tracking-tight md:text-3xl lg:text-4xl break-words leading-tight flex-1 min-w-0">
+              {displayTitle}
+            </h1>
             {isEditor && (
               <Button asChild variant="outline" size="sm" className="h-8 shadow-sm">
                 <Link href={`/${p.slug}?edit=true`}>
@@ -105,9 +107,16 @@ export default async function ArticlePage({
             )}
           </div>
           
-          <div className="flex items-center gap-4 mt-4 text-sm text-muted-foreground">
-            <span>Last updated on {frontmatter.date || "Unknown"}</span>
-            {frontmatter.author && <span>by {frontmatter.author}</span>}
+          <div className="flex flex-wrap items-center gap-4 mt-4 text-xs sm:text-sm text-muted-foreground">
+            <span className="shrink-0 text-primary uppercase font-bold tracking-widest text-[10px]">Documentation</span>
+            <span className="opacity-40">•</span>
+            <span>Last updated {frontmatter.date || "recently"}</span>
+            {frontmatter.author && (
+              <>
+                <span className="opacity-40">•</span>
+                <span className="truncate max-w-[150px]">By {frontmatter.author}</span>
+              </>
+            )}
             <div className="flex gap-2">
               {(frontmatter.tags || []).map((tag: string) => (
                 <Badge key={tag} variant="secondary" className="px-1.5 py-0 text-xs font-normal">

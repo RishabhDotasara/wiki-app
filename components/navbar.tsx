@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Search, User } from "lucide-react";
+import { Search, User, Plus } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { getCurrentUser } from "@/lib/auth";
 import { LoginButton, LogoutButton } from "@/components/auth-buttons";
@@ -19,14 +19,24 @@ export async function Navbar() {
             className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-primary transition-colors bg-muted/20 px-3 py-1.5 rounded-md border border-muted-foreground/10"
           >
             <Search className="h-4 w-4" />
-            <span>Explore tags...</span>
+            <span className="hidden sm:inline">Explore tags...</span>
           </Link>
         </div>
         <div className="flex items-center space-x-4">
           {user && (
-             <Link href="/queue" className="text-sm font-semibold text-muted-foreground hover:text-primary hidden md:block">
-               {user.role === "admin" ? "Moderation Queue" : "My Requests"}
-             </Link>
+            <div className="flex items-center gap-4">
+              <Link 
+                href="/new-article?edit=true" 
+                className="flex items-center gap-2 text-sm font-semibold text-primary hover:text-primary/80 transition-colors"
+                title="Create New Article"
+              >
+                <Plus className="h-4 w-4" />
+                <span className="hidden lg:inline">New Article</span>
+              </Link>
+              <Link href="/queue" className="text-sm font-semibold text-muted-foreground hover:text-primary hidden md:block">
+                {user.role === "admin" ? "Queue" : "My Requests"}
+              </Link>
+            </div>
           )}
           {user ? (
              <div className="flex items-center gap-3">

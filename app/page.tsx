@@ -56,15 +56,6 @@ export default async function HomePage() {
           <h1 className="text-3xl font-bold tracking-tight">Welcome to Campuslores</h1>
           <p className="text-muted-foreground mt-2">Your centralized source for institutional knowledge and documentation.</p>
         </div>
-        
-        {isEditor && (
-          <Button asChild>
-            <Link href="/new-article?edit=true">
-              <Plus className="h-4 w-4 mr-2" />
-              New Article
-            </Link>
-          </Button>
-        )}
       </div>
 
       {errorMsg ? (
