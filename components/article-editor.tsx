@@ -38,7 +38,9 @@ export function ArticleEditor({
   const handleSave = () => {
     startTransition(async () => {
       try {
-        const result = await saveArticleAction(title, content, tags);
+        // Only pass slug if it's an existing article (not our 'new-article' route)
+        const existingSlug = slug !== "new-article" ? slug : undefined;
+        const result = await saveArticleAction(title, content, tags, existingSlug);
         
         if (result.isQueued) {
            alert("Your edit has been safely queued for an Admin to review and approve!");

@@ -151,13 +151,17 @@ function fromBase64(b64: string): string {
 }
 
 /** Convert a human-readable title to a URL/filename-safe slug. */
-function slugify(title: string): string {
-  return title
+export function slugify(title: string): string {
+  const base = title
     .toLowerCase()
     .trim()
     .replace(/[^a-z0-9\s-]/g, "")
     .replace(/\s+/g, "-")
-    .replace(/-+/g, "-");
+    .replace(/-+/g, "-")
+    .replace(/(^-|-$)+/g, "");
+  
+  const suffix = Math.random().toString(36).substring(2, 6);
+  return `${base}-${suffix}`;
 }
 
 /** Build the repo-relative file path for a wiki page. */
@@ -374,9 +378,10 @@ export async function upsertPage(
   title: string,
   body: string,
   author: string = "wiki-app",
-  targetBranch: string = CONFIG.branch
+  targetBranch: string = CONFIG.branch,
+  forcedSlug?: string
 ): Promise<WriteResult> {
-  const slug = slugify(title);
+  const slug = forcedSlug || slugify(title);
 
   try {
     const existing = await getPage(slug);

@@ -12,7 +12,8 @@ import matter from "gray-matter";
 export async function saveArticleAction(
   title: string,
   content: string,
-  tags: string[] = []
+  tags: string[] = [],
+  existingSlug?: string
 ) {
   const user = await getCurrentUser();
   if (!user || !(await canEdit(user))) {
@@ -27,12 +28,14 @@ export async function saveArticleAction(
     tags,
   });
 
-  const { upsertPage, getBranchSha, createBranch, createPullRequest } = await import("./github");
+  const { upsertPage, getBranchSha, createBranch, createPullRequest, slugify } = await import("./github");
   const isAdmin = user.role === "admin";
-  const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, "");
+  
+  // Use existing slug if provided (preserves URL), otherwise generate new unique one
+  const slug = existingSlug || slugify(title);
 
   if (isAdmin) {
-    const result = await upsertPage(title, fileContent, user.name);
+    const result = await upsertPage(title, fileContent, user.name, undefined, slug);
     
     // Automatically update the scalable registry
     const { updateRegistryEntry } = await import("./github");
@@ -52,8 +55,8 @@ export async function saveArticleAction(
   const sha = await getBranchSha();
   
   await createBranch(branchName, sha);
-  // Upsert pointing strictly to the new branch
-  await upsertPage(title, fileContent, user.name, branchName);
+  // Upsert pointing strictly to the new branch, using the stable slug
+  await upsertPage(title, fileContent, user.name, branchName, slug);
   
   await createPullRequest(
     `Suggested Edit: ${title}`, 
