@@ -25,7 +25,10 @@ export default async function HomePage() {
     // Filter for articles tagged with "Guide"
     pages = Object.entries(registry.articles)
       .map(([slug, data]) => ({ slug, frontmatter: data }))
-      .filter(art => art.frontmatter.tags.some(t => t.toLowerCase() === "guide"))
+      .filter(art => art.frontmatter.tags.some(t => {
+        const lower = t.toLowerCase();
+        return lower === "guide" || lower.endsWith("/guide");
+      }))
       .sort((a, b) => new Date(b.frontmatter.lastUpdated).getTime() - new Date(a.frontmatter.lastUpdated).getTime())
       .slice(0, 10);
 
