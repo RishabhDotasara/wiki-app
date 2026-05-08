@@ -117,7 +117,7 @@ const CONFIG: GitHubConfig = {
   owner: "RishabhDotasara",        // e.g. "acme-corp"
   repo: "insti-wiki",              // e.g. "institute-wiki"
   branch: "main",
-  token: process.env.GITHUB_PAT,  // ghp_xxxxxxxxxxxx
+  token: process.env.GITHUB_PAT!,  // ghp_xxxxxxxxxxxx
   contentDir: "wiki",                        // folder inside the repo
 };
 

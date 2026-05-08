@@ -19,7 +19,10 @@ export function TableOfContents({ headings }: TocProps) {
           }
         });
       },
-      { rootMargin: "0% 0% -80% 0%" }
+      { 
+        rootMargin: "-100px 0% -60% 0%", // Top margin compensates for header
+        threshold: 0.5 
+      }
     );
 
     headings.forEach((heading) => {
@@ -52,12 +55,22 @@ export function TableOfContents({ headings }: TocProps) {
                 )}
                 onClick={(e) => {
                   e.preventDefault();
-                  document.querySelector(`#${heading.id}`)?.scrollIntoView({
-                    behavior: "smooth"
-                  });
-                  // Update URL hash without scroll jumping
-                  window.history.pushState(null, "", `#${heading.id}`);
-                  setActiveId(heading.id);
+                  const el = document.getElementById(heading.id);
+                  if (el) {
+                    const offset = 100; // Account for sticky navbar height
+                    const bodyRect = document.body.getBoundingClientRect().top;
+                    const elementRect = el.getBoundingClientRect().top;
+                    const elementPosition = elementRect - bodyRect;
+                    const offsetPosition = elementPosition - offset;
+
+                    window.scrollTo({
+                      top: offsetPosition,
+                      behavior: "smooth"
+                    });
+                    
+                    window.history.pushState(null, "", `#${heading.id}`);
+                    setActiveId(heading.id);
+                  }
                 }}
               >
                 {heading.text}

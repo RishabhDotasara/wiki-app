@@ -19,9 +19,10 @@ export function extractHeadings(markdown: string) {
     const id = text
       .toLowerCase()
       .trim()
-      .replace(/[^\w\s-]/g, '')
-      .replace(/[\s_-]+/g, '-')
-      .replace(/^-+|-+$/g, '');
+      .replace(/\s+/g, '-')     // spaces to dashes
+      .replace(/[^\w-]/g, '')    // remove all non-word chars (except dashes)
+      .replace(/--+/g, '-')     // replace multiple dashes with single dash
+      .replace(/^-+|-+$/g, '');  // trim dashes from start/end
       
     headings.push({ level, text, id });
   }
