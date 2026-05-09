@@ -26,19 +26,19 @@ export default async function SettingsPage() {
       <Card className="overflow-hidden">
         <CardHeader className="space-y-1">
           <CardTitle className="flex items-center gap-2 text-xl">
-            <Key className="h-5 w-5 text-primary" />
+            {/* <Key className="h-5 w-5 text-primary" /> */}
             Your API Key
           </CardTitle>
           <CardDescription className="text-sm">
-            Use this key to authenticate requests to the FlightDeck Webhook API. 
+            Use this key to authenticate requests to the FlightDeck Webhook API.
             This key is unique to your account and should be kept secret.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="flex flex-col sm:flex-row gap-3">
-            <Input 
-              readOnly 
-              value={apiKey} 
+            <Input
+              readOnly
+              value={apiKey}
               className="font-mono text-xs md:text-sm bg-muted/50 h-10"
             />
             <CopyButton value={apiKey} className="h-10 shrink-0" />
@@ -47,7 +47,7 @@ export default async function SettingsPage() {
           <div className="flex items-start gap-3 p-4 rounded-lg bg-yellow-500/10 border border-yellow-500/20 text-yellow-700 dark:text-yellow-400 text-xs">
             <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
             <p className="leading-normal">
-              Anyone with this key can create or update articles on your behalf. 
+              Anyone with this key can create or update articles on your behalf.
               Do not share it or commit it to public repositories.
             </p>
           </div>
@@ -55,7 +55,7 @@ export default async function SettingsPage() {
           <div className="pt-2 space-y-3">
             <div className="flex items-center justify-between">
               <h4 className="text-sm font-semibold">API Usage Example</h4>
-              <CopyButton 
+              <CopyButton
                 value={`curl -X POST /api/articles \\
   -H "x-api-key: ${apiKey}" \\
   -H "Content-Type: application/json" \\
@@ -74,7 +74,7 @@ export default async function SettingsPage() {
             </div>
             <div className="bg-slate-950 dark:bg-muted p-4 rounded-lg overflow-x-auto border border-border/50">
               <pre className="text-[10px] md:text-[11px] leading-relaxed font-mono text-slate-300 dark:text-muted-foreground whitespace-pre-wrap sm:whitespace-pre">
-{`curl -X POST /api/articles \\
+                {`curl -X POST /api/articles \\
   -H "x-api-key: ${apiKey}" \\
   -H "Content-Type: application/json" \\
   -d '{

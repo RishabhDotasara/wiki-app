@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { ChevronRight, Folder, FileText, Home, RefreshCcw } from "lucide-react";
+import { ChevronRight, Folder, FileText, Home, RefreshCcw, Search } from "lucide-react";
 import { RebuildRegistryButton } from "@/components/rebuild-button";
 import { ExploreClient } from "@/components/explore-client";
 
@@ -64,7 +64,7 @@ export default async function ExplorePage({
       {/* Search Header / Breadcrumbs */}
       <div className="flex items-center justify-between">
         <div className="space-y-4 flex-1">
-          <h1 className="text-3xl font-bold tracking-tight">Tag Explorer</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Knowledge Compass</h1>
           <nav className="flex items-center text-sm font-medium text-muted-foreground bg-muted/30 p-3 rounded-lg border">
             <Link href="/explore" className="hover:text-primary flex items-center gap-1 transition-colors">
               <Home className="h-4 w-4" /> Root

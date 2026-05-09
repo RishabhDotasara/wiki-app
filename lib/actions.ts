@@ -203,3 +203,57 @@ export async function rebuildRegistryAction() {
   revalidatePath("/");
 }
 
+// ─── ASKS (Community Article Requests) ────────────────────────────────────────
+
+/**
+ * Submit a new article request.
+ */
+export async function submitAskAction(title: string, description: string) {
+  const user = await getCurrentUser();
+  if (!user) throw new Error("Unauthorized: You must be logged in to post a request.");
+
+  const { addAsk } = await import("./github");
+
+  await addAsk({
+    id: `ask-${Date.now()}`,
+    title: title.trim(),
+    description: description.trim(),
+    requester: { name: user.name, email: user.email },
+    createdAt: new Date().toISOString(),
+    status: "open",
+    upvotes: [user.email], // auto-upvote by requester
+  });
+
+  revalidatePath("/asks");
+}
+
+/**
+ * Resolve an ask by linking a validated article.
+ */
+export async function resolveAskAction(askId: string, articleSlug: string, articleTitle: string) {
+  const user = await getCurrentUser();
+  if (!user) throw new Error("Unauthorized");
+
+  const { resolveAsk } = await import("./github");
+  await resolveAsk(
+    askId,
+    { name: user.name, email: user.email },
+    articleSlug,
+    articleTitle
+  );
+
+  revalidatePath("/asks");
+}
+
+/**
+ * Toggle upvote on an ask.
+ */
+export async function upvoteAskAction(askId: string) {
+  const user = await getCurrentUser();
+  if (!user) throw new Error("Unauthorized");
+
+  const { upvoteAsk } = await import("./github");
+  await upvoteAsk(askId, user.email);
+
+  revalidatePath("/asks");
+}

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Search, User, Plus } from "lucide-react";
+import { Search, User, Plus, MessageSquarePlus } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { getCurrentUser } from "@/lib/auth";
 import { LoginButton, LogoutButton } from "@/components/auth-buttons";
@@ -22,18 +22,18 @@ export async function Navbar() {
           FlightDeck
         </Link>
         <div className="flex flex-1 items-center justify-start ml-2 md:ml-4">
-          <Link 
-            href="/explore" 
+          <Link
+            href="/explore"
             className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-primary transition-colors bg-muted/20 px-3 py-1.5 rounded-md border border-muted-foreground/10"
           >
             <Search className="h-4 w-4" />
-            <span className="hidden sm:inline">Explore tags...</span>
+            <span className="hidden sm:inline">Compass...</span>
           </Link>
         </div>
         <div className="flex items-center space-x-4">
           {user && (
-            <Link 
-              href="/new-article?edit=true" 
+            <Link
+              href="/new-article?edit=true"
               className="flex items-center gap-2 text-sm font-semibold text-primary hover:text-primary/80 transition-colors mr-2"
               title="Create New Article"
             >
@@ -61,13 +61,19 @@ export async function Navbar() {
                   <Link href="/my-articles" className="cursor-pointer w-full">My Articles</Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
+                  <Link href="/asks" className="cursor-pointer w-full flex items-center gap-2">
+                    {/* <MessageSquarePlus className="h-3.5 w-3.5" /> */}
+                    Article Requests
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
                   <Link href="/queue" className="cursor-pointer w-full">
                     {user.role === "admin" ? "Queue" : "My Requests"}
                   </Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem asChild>
+                {/* <DropdownMenuItem asChild>
                   <Link href="/settings" className="cursor-pointer w-full">Developer Settings</Link>
-                </DropdownMenuItem>
+                </DropdownMenuItem> */}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
                   <LogoutButton />
@@ -75,7 +81,7 @@ export async function Navbar() {
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-             <LoginButton />
+            <LoginButton />
           )}
         </div>
       </div>

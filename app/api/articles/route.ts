@@ -130,6 +130,14 @@ export async function POST(req: NextRequest) {
       lastUpdated: now,
     });
 
+    // Track in the author's personal article registry
+    const { addArticleToUser } = await import("@/lib/github");
+    await addArticleToUser(author.email, {
+      slug: result.slug,
+      title,
+      lastUpdated: now,
+    });
+
     return NextResponse.json(
       {
         success: true,

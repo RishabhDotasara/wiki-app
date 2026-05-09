@@ -779,15 +779,30 @@ export async function rebuildRegistry(): Promise<void> {
       };
       articles[p.slug] = entry;
 
-      // Track per-user articles if email exists
-      const email = parsed.data.authorEmail;
-      if (email) {
-        if (!userArticlesMap[email]) userArticlesMap[email] = [];
-        userArticlesMap[email].push({
-          slug: p.slug,
-          title: entry.title,
-          lastUpdated: entry.lastUpdated
-        });
+      // Track per-user articles from contributors array (current format)
+      const contributors = parsed.data.contributors;
+      if (Array.isArray(contributors)) {
+        for (const c of contributors) {
+          if (c.email) {
+            if (!userArticlesMap[c.email]) userArticlesMap[c.email] = [];
+            userArticlesMap[c.email].push({
+              slug: p.slug,
+              title: entry.title,
+              lastUpdated: entry.lastUpdated
+            });
+          }
+        }
+      } else {
+        // Legacy fallback: single authorEmail
+        const email = parsed.data.authorEmail;
+        if (email) {
+          if (!userArticlesMap[email]) userArticlesMap[email] = [];
+          userArticlesMap[email].push({
+            slug: p.slug,
+            title: entry.title,
+            lastUpdated: entry.lastUpdated
+          });
+        }
       }
     } catch (e) {}
   }
@@ -877,6 +892,120 @@ export async function addArticleToUser(email: string, entry: UserArticleEntry): 
       message: `user-registry: track article ${entry.slug} for ${email}`,
       content: toBase64(JSON.stringify(existing, null, 2)),
       sha,
+      branch: CONFIG.branch
+    })
+  });
+}
+
+// ─── ASKS SYSTEM (Community Article Requests) ────────────────────────────────
+
+export interface Ask {
+  id: string;
+  title: string;
+  description: string;
+  requester: {
+    name: string;
+    email: string;
+  };
+  createdAt: string;
+  status: "open" | "resolved";
+  resolvedBy?: {
+    name: string;
+    email: string;
+    articleSlug: string;
+    articleTitle: string;
+    resolvedAt: string;
+  };
+  upvotes: string[]; // emails for dedup
+}
+
+const ASKS_PATH = "asks.json";
+
+/** Fetch all asks from the repo */
+export async function getAsks(): Promise<Ask[]> {
+  try {
+    const res = await apiFetch<GitHubFileContent>(ASKS_PATH);
+    return JSON.parse(fromBase64(res.content));
+  } catch (e: any) {
+    return [];
+  }
+}
+
+/** Add a new ask */
+export async function addAsk(ask: Ask): Promise<void> {
+  const existing = await getAsks();
+  existing.unshift(ask);
+
+  let sha;
+  try {
+    const res = await apiFetch<GitHubFileContent>(ASKS_PATH);
+    sha = res.sha;
+  } catch (e) {}
+
+  await apiFetch(ASKS_PATH, {
+    method: 'PUT',
+    body: JSON.stringify({
+      message: `ask: new request "${ask.title}"`,
+      content: toBase64(JSON.stringify(existing, null, 2)),
+      sha,
+      branch: CONFIG.branch
+    })
+  });
+}
+
+/** Resolve an ask by linking an article */
+export async function resolveAsk(
+  askId: string,
+  resolver: { name: string; email: string },
+  articleSlug: string,
+  articleTitle: string
+): Promise<void> {
+  const existing = await getAsks();
+  const ask = existing.find(a => a.id === askId);
+  if (!ask) throw new Error("Ask not found");
+
+  ask.status = "resolved";
+  ask.resolvedBy = {
+    ...resolver,
+    articleSlug,
+    articleTitle,
+    resolvedAt: new Date().toISOString()
+  };
+
+  const res = await apiFetch<GitHubFileContent>(ASKS_PATH);
+
+  await apiFetch(ASKS_PATH, {
+    method: 'PUT',
+    body: JSON.stringify({
+      message: `ask: resolved "${ask.title}" → ${articleSlug}`,
+      content: toBase64(JSON.stringify(existing, null, 2)),
+      sha: res.sha,
+      branch: CONFIG.branch
+    })
+  });
+}
+
+/** Toggle upvote on an ask */
+export async function upvoteAsk(askId: string, email: string): Promise<void> {
+  const existing = await getAsks();
+  const ask = existing.find(a => a.id === askId);
+  if (!ask) throw new Error("Ask not found");
+
+  const idx = ask.upvotes.indexOf(email);
+  if (idx !== -1) {
+    ask.upvotes.splice(idx, 1); // remove upvote
+  } else {
+    ask.upvotes.push(email); // add upvote
+  }
+
+  const res = await apiFetch<GitHubFileContent>(ASKS_PATH);
+
+  await apiFetch(ASKS_PATH, {
+    method: 'PUT',
+    body: JSON.stringify({
+      message: `ask: ${idx !== -1 ? 'remove' : 'add'} upvote on "${ask.title}"`,
+      content: toBase64(JSON.stringify(existing, null, 2)),
+      sha: res.sha,
       branch: CONFIG.branch
     })
   });

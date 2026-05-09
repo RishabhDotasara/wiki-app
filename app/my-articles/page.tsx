@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
 import { FileText, Pencil } from "lucide-react";
+import { RebuildRegistryButton } from "@/components/rebuild-registry-button";
 import { Button } from "@/components/ui/button";
 
 export default async function MyArticlesPage() {
@@ -15,9 +16,12 @@ export default async function MyArticlesPage() {
   return (
     <div className="w-full max-w-4xl mx-auto py-12 px-6 space-y-12">
       <section className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">My Articles</h1>
-          <p className="text-muted-foreground mt-2">A registry of the knowledge pages you've contributed to FlightDeck that have been published.</p>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">My Articles</h1>
+            <p className="text-muted-foreground mt-2">A registry of the knowledge pages you've contributed to FlightDeck that have been published.</p>
+          </div>
+          {user.role === "admin" && <RebuildRegistryButton />}
         </div>
 
         {articles.length === 0 ? (
