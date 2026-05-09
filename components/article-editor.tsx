@@ -33,6 +33,7 @@ export function ArticleEditor({
   const [content, setContent] = useState(initialContent);
   const [tags, setTags] = useState<string[]>(initialTags);
   const [tagInput, setTagInput] = useState("");
+  const [updateMessage, setUpdateMessage] = useState("");
   const [isPending, startTransition] = useTransition();
 
   const handleSave = () => {
@@ -40,7 +41,7 @@ export function ArticleEditor({
       try {
         // Only pass slug if it's an existing article (not our 'new-article' route)
         const existingSlug = slug !== "new-article" ? slug : undefined;
-        const result = await saveArticleAction(title, content, tags, existingSlug);
+        const result = await saveArticleAction(title, content, tags, existingSlug, updateMessage);
         
         if (result.isQueued) {
            alert("Your edit has been submitted for review! You can track its status in the queue.");
@@ -138,6 +139,24 @@ export function ArticleEditor({
               className="min-h-[60vh] font-mono text-sm resize-y"
               disabled={isPending}
             />
+          </div>
+
+          <div className="space-y-2 p-4 bg-muted/30 rounded-lg border border-dashed">
+            <label htmlFor="updateMessage" className="text-sm font-medium flex items-center justify-between">
+              <span>Update Summary (Optional)</span>
+              <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Recommended</span>
+            </label>
+            <Input 
+              id="updateMessage" 
+              value={updateMessage} 
+              onChange={(e) => setUpdateMessage(e.target.value)} 
+              placeholder={slug === "new-article" ? "e.g., Initial draft" : "e.g., Fixed typos, updated section about..."}
+              className="bg-background/50"
+              disabled={isPending}
+            />
+            <p className="text-[10px] text-muted-foreground italic">
+              Briefly describe what you changed to help other editors track the history.
+            </p>
           </div>
         </div>
         

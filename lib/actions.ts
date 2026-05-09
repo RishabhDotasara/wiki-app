@@ -2,7 +2,6 @@
 
 import { revalidatePath } from "next/cache";
 import { getCurrentUser, canEdit } from "./auth";
-import { upsertPage } from "./github";
 import matter from "gray-matter";
 
 /**
@@ -13,27 +12,78 @@ export async function saveArticleAction(
   title: string,
   content: string,
   tags: string[] = [],
-  existingSlug?: string
+  existingSlug?: string,
+  updateMessage?: string
 ) {
   const user = await getCurrentUser();
   if (!user || !(await canEdit(user))) {
     throw new Error("Unauthorized: Only editors can perform this action.");
   }
 
-  // Format datastream with Gray-Matter Frontmatter
-  const fileContent = matter.stringify("\n" + content, {
-    title,
-    author: user.name,
-    authorEmail: user.email,
-    date: new Date().toISOString().split("T")[0],
-    tags,
-  });
-
-  const { upsertPage, getBranchSha, createBranch, createPullRequest, slugify } = await import("./github");
+  const { upsertPage, getBranchSha, createBranch, createPullRequest, slugify, getPage } = await import("./github");
   const isAdmin = user.role === "admin";
   
   // Use existing slug if provided (preserves URL), otherwise generate new unique one
   const slug = existingSlug || slugify(title);
+
+  // Build history lists: preserve existing, append current user as contributor and update
+  let contributors: { name: string; email: string; date: string }[] = [];
+  let updates: { name: string; email: string; date: string; message: string }[] = [];
+  
+  if (existingSlug) {
+    try {
+      const existing = await getPage(existingSlug);
+      const parsed = matter(existing.body);
+      
+      // Load contributors
+      if (Array.isArray(parsed.data.contributors)) {
+        contributors = parsed.data.contributors;
+      } else if (parsed.data.author) {
+        // Migrate legacy single-author format
+        contributors = [{
+          name: parsed.data.author,
+          email: parsed.data.authorEmail || "",
+          date: parsed.data.date || new Date().toISOString()
+        }];
+      }
+
+      // Load updates
+      if (Array.isArray(parsed.data.updates)) {
+        updates = parsed.data.updates;
+      }
+    } catch (e) {
+      // New article or fetch failed - start fresh
+    }
+  }
+
+  const now = new Date().toISOString();
+  const dateOnly = now.split("T")[0];
+
+  // Add/update current user's contribution entry (for unique authors list)
+  const existingContribIdx = contributors.findIndex(c => c.email === user.email);
+  if (existingContribIdx !== -1) {
+    contributors[existingContribIdx].date = dateOnly;
+  } else {
+    contributors.push({ name: user.name, email: user.email, date: dateOnly });
+  }
+
+  // Record this specific update
+  updates.push({
+    name: user.name,
+    email: user.email,
+    date: now,
+    message: updateMessage || (existingSlug ? "Updated article" : "Created article")
+  });
+
+  // Format datastream with Gray-Matter Frontmatter
+  const fileContent = matter.stringify("\n" + content, {
+    title,
+    contributors,
+    updates: updates.slice(-50), // Keep last 50 updates to prevent frontmatter bloat
+    date: dateOnly,
+    tags,
+  });
+
 
   if (isAdmin) {
     const result = await upsertPage(title, fileContent, user.name, undefined, slug);
