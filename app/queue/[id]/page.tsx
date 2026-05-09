@@ -45,6 +45,13 @@ export default async function QueueDetailPage({ params }: { params: Promise<{ id
           articleTitle: pr.title.replace('Suggested Edit: ', ''),
           timestamp: new Date().toISOString()
        });
+
+       const { addArticleToUser } = await import("@/lib/github");
+       await addArticleToUser(editorEmail, {
+         slug,
+         title: pr.title.replace('Suggested Edit: ', ''),
+         lastUpdated: new Date().toISOString()
+       });
     }
 
     redirect("/queue");

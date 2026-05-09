@@ -759,35 +759,123 @@ export async function updateRegistryEntry(slug: string, entry: RegistryEntry): P
 
 /** 
  * Rebuild the entire registry from scratch! 
+ * Now also rebuilds individual user-registries based on authorEmail in frontmatter.
  */
 export async function rebuildRegistry(): Promise<void> {
   const meta = await listPages();
   const articles: Record<string, RegistryEntry> = {};
+  const userArticlesMap: Record<string, UserArticleEntry[]> = {};
   
   // Sequential to avoid rate limits during rebuild
   for (const p of meta) {
     try {
       const full = await getPage(p.slug);
       const parsed = (await import("gray-matter")).default(full.body);
-      articles[p.slug] = {
+      
+      const entry: RegistryEntry = {
         title: parsed.data.title || p.title,
         tags: parsed.data.tags || [],
         lastUpdated: parsed.data.date || new Date().toISOString()
       };
+      articles[p.slug] = entry;
+
+      // Track per-user articles if email exists
+      const email = parsed.data.authorEmail;
+      if (email) {
+        if (!userArticlesMap[email]) userArticlesMap[email] = [];
+        userArticlesMap[email].push({
+          slug: p.slug,
+          title: entry.title,
+          lastUpdated: entry.lastUpdated
+        });
+      }
     } catch (e) {}
   }
 
-  let sha;
+  // 1. Update Global Registry
+  let globalSha;
   try {
     const res = await apiFetch<GitHubFileContent>(REGISTRY_PATH);
-    sha = res.sha;
+    globalSha = res.sha;
   } catch (e) {}
 
   await apiFetch(REGISTRY_PATH, {
     method: 'PUT',
     body: JSON.stringify({
-      message: "registry: full rebuild",
+      message: "registry: full global rebuild",
       content: toBase64(JSON.stringify({ articles }, null, 2)),
+      sha: globalSha,
+      branch: CONFIG.branch
+    })
+  });
+
+  // 2. Update User Registries
+  for (const [email, userArticles] of Object.entries(userArticlesMap)) {
+    const path = userRegistryPath(email);
+    let userSha;
+    try {
+      const res = await apiFetch<GitHubFileContent>(path);
+      userSha = res.sha;
+    } catch (e) {}
+
+    await apiFetch(path, {
+      method: 'PUT',
+      body: JSON.stringify({
+        message: `user-registry: rebuild for ${email}`,
+        content: toBase64(JSON.stringify(userArticles, null, 2)),
+        sha: userSha,
+        branch: CONFIG.branch
+      })
+    });
+  }
+}
+
+// ─── USER ARTICLE TRACKING ───────────────────────────────────────────────────
+
+export interface UserArticleEntry {
+  slug: string;
+  title: string;
+  lastUpdated: string;
+}
+
+function userRegistryPath(email: string) {
+  return `user-registries/${email.replace(/[^a-zA-Z0-9]/g, '_')}.json`;
+}
+
+/** Get articles authored by the user */
+export async function getUserArticles(email: string): Promise<UserArticleEntry[]> {
+  try {
+    const res = await apiFetch<GitHubFileContent>(userRegistryPath(email));
+    return JSON.parse(fromBase64(res.content));
+  } catch (e) {
+    return [];
+  }
+}
+
+/** Register an authored article to a user */
+export async function addArticleToUser(email: string, entry: UserArticleEntry): Promise<void> {
+  const path = userRegistryPath(email);
+  const existing = await getUserArticles(email);
+  
+  // Update or insert
+  const index = existing.findIndex(a => a.slug === entry.slug);
+  if (index !== -1) {
+    existing[index] = entry;
+  } else {
+    existing.unshift(entry); // prepend new article
+  }
+  
+  let sha;
+  try {
+    const res = await apiFetch<GitHubFileContent>(path);
+    sha = res.sha;
+  } catch (e) {}
+
+  await apiFetch(path, {
+    method: 'PUT',
+    body: JSON.stringify({
+      message: `user-registry: track article ${entry.slug} for ${email}`,
+      content: toBase64(JSON.stringify(existing, null, 2)),
       sha,
       branch: CONFIG.branch
     })

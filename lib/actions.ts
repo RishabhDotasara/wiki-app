@@ -24,6 +24,7 @@ export async function saveArticleAction(
   const fileContent = matter.stringify("\n" + content, {
     title,
     author: user.name,
+    authorEmail: user.email,
     date: new Date().toISOString().split("T")[0],
     tags,
   });
@@ -38,12 +39,20 @@ export async function saveArticleAction(
     const result = await upsertPage(title, fileContent, user.name, undefined, slug);
     
     // Automatically update the scalable registry
-    const { updateRegistryEntry } = await import("./github");
+    const { updateRegistryEntry, addArticleToUser } = await import("./github");
     await updateRegistryEntry(result.slug, {
       title,
       tags,
       lastUpdated: new Date().toISOString()
     });
+
+    if (user.email) {
+      await addArticleToUser(user.email, {
+        slug: result.slug,
+        title,
+        lastUpdated: new Date().toISOString()
+      });
+    }
 
     revalidatePath("/");
     revalidatePath(`/${result.slug}`);
@@ -128,5 +137,19 @@ export async function settleNotificationAction(notifId: string) {
 export async function getEditorEmailFromPR(body: string): Promise<string | null> {
   const match = /\(([^)]+@[^)]+)\)/.exec(body);
   return match ? match[1] : null;
+}
+
+/**
+ * Admin action to trigger a full global registry rebuild.
+ */
+export async function rebuildRegistryAction() {
+  const user = await getCurrentUser();
+  if (!user || user.role !== "admin") {
+    throw new Error("Unauthorized: Only admins can rebuild the global registry.");
+  }
+
+  const { rebuildRegistry } = await import("./github");
+  await rebuildRegistry();
+  revalidatePath("/");
 }
 

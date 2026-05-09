@@ -3,6 +3,14 @@ import { Search, User, Plus } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { getCurrentUser } from "@/lib/auth";
 import { LoginButton, LogoutButton } from "@/components/auth-buttons";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
 
 export async function Navbar() {
   const user = await getCurrentUser();
@@ -24,33 +32,45 @@ export async function Navbar() {
         </div>
         <div className="flex items-center space-x-4">
           {user && (
-            <div className="flex items-center gap-4">
-              <Link 
-                href="/new-article?edit=true" 
-                className="flex items-center gap-2 text-sm font-semibold text-primary hover:text-primary/80 transition-colors"
-                title="Create New Article"
-              >
-                <Plus className="h-4 w-4" />
-                <span className="hidden lg:inline">New Article</span>
-              </Link>
-              <Link href="/queue" className="text-sm font-semibold text-muted-foreground hover:text-primary hidden md:block">
-                {user.role === "admin" ? "Queue" : "My Requests"}
-              </Link>
-            </div>
+            <Link 
+              href="/new-article?edit=true" 
+              className="flex items-center gap-2 text-sm font-semibold text-primary hover:text-primary/80 transition-colors mr-2"
+              title="Create New Article"
+            >
+              <Plus className="h-4 w-4" />
+              <span className="hidden lg:inline">New Article</span>
+            </Link>
           )}
+
           {user ? (
-             <div className="flex items-center gap-3">
-               <div className="flex items-center gap-2 overflow-hidden max-w-[120px] hidden sm:flex">
-                 {user.image ? (
-                   /* eslint-disable-next-line @next/next/no-img-element */
-                   <img src={user.image} alt={user.name} className="h-6 w-6 rounded-full" />
-                 ) : (
-                   <User className="h-4 w-4 text-muted-foreground" />
-                 )}
-                 <span className="text-sm font-medium truncate">{user.name}</span>
-               </div>
-               <LogoutButton />
-             </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <div className="flex items-center gap-2 overflow-hidden max-w-[120px] cursor-pointer hover:bg-muted/50 px-2 py-1.5 rounded-md transition-colors">
+                  {user.image ? (
+                    <img src={user.image} alt={user.name} className="h-6 w-6 rounded-full" />
+                  ) : (
+                    <User className="h-5 w-5 text-muted-foreground bg-muted rounded-full p-0.5" />
+                  )}
+                  <span className="text-sm font-medium truncate hidden sm:inline">{user.name}</span>
+                </div>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link href="/my-articles" className="cursor-pointer w-full">My Articles</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/queue" className="cursor-pointer w-full">
+                    {user.role === "admin" ? "Queue" : "My Requests"}
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <LogoutButton />
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           ) : (
              <LoginButton />
           )}

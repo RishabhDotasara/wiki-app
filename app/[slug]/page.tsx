@@ -145,7 +145,7 @@ export default async function ArticlePage({
 
       {/* Right Sidebar - Dynamic TOC */}
       <div className="hidden md:block w-[240px] shrink-0 sticky top-[80px]">
-        <TableOfContents headings={headings.filter(h => h.level <= 3)} />
+        <TableOfContents headings={headings.filter(h => h.level <= 2)} />
       </div>
     </div>
   );

@@ -1,6 +1,6 @@
 import { getCurrentUser } from "@/lib/auth";
 import { listPullRequests, getUserNotifications } from "@/lib/github";
-import { settleNotificationAction } from "@/lib/actions";
+import { settleNotificationAction, rebuildRegistryAction } from "@/lib/actions";
 import { redirect } from "next/navigation";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
@@ -8,12 +8,14 @@ import { Button } from "@/components/ui/button";
 import { formatDistanceToNow } from "date-fns";
 import { CheckCircle2, XCircle, Bell, Pencil } from "lucide-react";
 import { SettleButton } from "@/components/settle-button";
+import { RebuildRegistryButton } from "@/components/rebuild-button";
 
 export default async function QueuePage() {
   const user = await getCurrentUser();
   if (!user) return redirect("/");
 
   const isEditor = user.role === "editor";
+  const isAdmin = user.role === "admin";
   const prs = await listPullRequests("open");
   const notifications = isEditor ? await getUserNotifications(user.email) : [];
   
@@ -71,9 +73,16 @@ export default async function QueuePage() {
       )}
 
       <section className="space-y-6">
-        <h1 className="text-3xl font-bold">
-          {isEditor ? "My Pending Requests" : "Moderation Queue"}
-        </h1>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <h1 className="text-3xl font-bold">
+            {isEditor ? "My Pending Requests" : "Moderation Queue"}
+          </h1>
+          {isAdmin && (
+            <form action={rebuildRegistryAction}>
+              <RebuildRegistryButton variant="outline" />
+            </form>
+          )}
+        </div>
 
         {myPrs.length === 0 ? (
           <div className="text-center py-24 bg-muted/30 rounded-xl border border-dashed">

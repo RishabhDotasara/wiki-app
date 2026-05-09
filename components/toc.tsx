@@ -49,8 +49,7 @@ export function TableOfContents({ headings }: TocProps) {
                 href={`#${heading.id}`}
                 className={cn(
                   "block hover:text-foreground transition-colors",
-                  heading.level === 3 && "ml-4",
-                  heading.level === 4 && "ml-8",
+                  heading.level === 2 && "ml-4",
                   isActive && "text-foreground font-medium"
                 )}
                 onClick={(e) => {

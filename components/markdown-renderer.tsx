@@ -7,7 +7,7 @@ import { vscDarkPlus } from 'react-syntax-highlighter/dist/cjs/styles/prism';
 import { Info, Lightbulb, CircleAlert, TriangleAlert, OctagonAlert } from "lucide-react";
 
 export function extractHeadings(markdown: string) {
-  const headingRegex = /^(#{2,3})\s+(.+)$/gm;
+  const headingRegex = /^(#{1,2})\s+(.+)$/gm;
   const headings = [];
   let match;
   
