@@ -18,9 +18,7 @@ export default async function AsksPage() {
       {/* Header */}
       <div className="space-y-2">
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-primary/10">
-            {/* <MessageSquarePlus className="h-5 w-5 text-primary" /> */}
-          </div>
+
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Article Requests</h1>
             <p className="text-muted-foreground mt-1">
@@ -43,7 +41,6 @@ export default async function AsksPage() {
       <section className="space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold flex items-center gap-2">
-            <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
             Open Requests
           </h2>
           <span className="text-xs text-muted-foreground font-medium bg-muted px-2 py-1 rounded-md">
