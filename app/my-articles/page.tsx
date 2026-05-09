@@ -15,12 +15,10 @@ export default async function MyArticlesPage() {
   return (
     <div className="w-full max-w-4xl mx-auto py-12 px-6 space-y-12">
       <section className="space-y-6">
-        <h1 className="text-3xl font-bold flex items-center gap-3">
-          <FileText className="h-8 w-8 text-primary" /> My Authored Articles
-        </h1>
-        <p className="text-muted-foreground text-sm">
-          A registry of the knowledge pages you've contributed to Campuslores that have been published.
-        </p>
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">My Articles</h1>
+          <p className="text-muted-foreground mt-2">A registry of the knowledge pages you've contributed to FlightDeck that have been published.</p>
+        </div>
 
         {articles.length === 0 ? (
           <div className="text-center py-24 bg-muted/30 rounded-xl border border-dashed hover:border-border transition-colors">

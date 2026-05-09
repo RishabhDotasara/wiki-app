@@ -93,7 +93,7 @@ export function ArticleEditor({
                 id="title" 
                 value={title} 
                 onChange={(e) => setTitle(e.target.value)} 
-                placeholder="e.g., Getting Started with Campuslores"
+                placeholder="e.g., Getting Started with FlightDeck"
                 className="text-lg font-medium"
                 disabled={isPending}
               />

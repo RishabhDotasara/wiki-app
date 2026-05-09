@@ -19,7 +19,7 @@ export default async function QueueDetailPage({ params }: { params: Promise<{ id
     const { getEditorEmailFromPR } = await import("@/lib/actions");
     
     const pr = await getPullRequest(pullNumber);
-    await mergePullRequest(pullNumber, "Approved by Admin via Campuslores");
+    await mergePullRequest(pullNumber, "Approved by Admin via FlightDeck");
     
     // Extract real slug from PR body (format: "Review changes for {slug}.")
     const slugMatch = pr.body.match(/Review changes for ([^.]+)\./);

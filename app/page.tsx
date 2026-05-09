@@ -53,7 +53,7 @@ export default async function HomePage() {
     <div className="space-y-8">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Welcome to Campuslores</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Welcome to FlightDeck</h1>
           <p className="text-muted-foreground mt-2">Your centralized source for institutional knowledge and documentation.</p>
         </div>
       </div>
