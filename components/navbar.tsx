@@ -57,9 +57,9 @@ export async function Navbar() {
               <DropdownMenuContent align="end" className="w-48">
                 <DropdownMenuLabel>My Account</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
+                {/* <DropdownMenuItem asChild>
                   <Link href="/my-articles" className="cursor-pointer w-full">My Articles</Link>
-                </DropdownMenuItem>
+                </DropdownMenuItem> */}
                 <DropdownMenuItem asChild>
                   <Link href="/asks" className="cursor-pointer w-full flex items-center gap-2">
                     {/* <MessageSquarePlus className="h-3.5 w-3.5" /> */}
