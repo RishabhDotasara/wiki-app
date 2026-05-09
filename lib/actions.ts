@@ -56,15 +56,16 @@ export async function saveArticleAction(
   
   await createBranch(branchName, sha);
   // Upsert pointing strictly to the new branch, using the stable slug
-  await upsertPage(title, fileContent, user.name, branchName, slug);
+  const result = await upsertPage(title, fileContent, user.name, branchName, slug);
+  const actualSlug = result.slug;
   
   await createPullRequest(
     `Suggested Edit: ${title}`, 
     branchName, 
-    `Automated pull request from Editor: @${user.name} (${user.email})\nReview changes for ${slug}.`
+    `Automated pull request from Editor: @${user.name} (${user.email})\nReview changes for ${actualSlug}.`
   );
 
-  return { success: true, slug, isQueued: true };
+  return { success: true, slug: actualSlug, isQueued: true };
 }
 
 /**

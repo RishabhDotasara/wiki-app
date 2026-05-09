@@ -284,9 +284,10 @@ export async function createPage(
   title: string,
   body: string,
   author: string = "wiki-app",
-  targetBranch: string = CONFIG.branch
+  targetBranch: string = CONFIG.branch,
+  forcedSlug?: string
 ): Promise<WriteResult> {
-  const slug = slugify(title);
+  const slug = forcedSlug || slugify(title);
   const message = `docs: create page "${title}" via ${author}`;
 
   const data = await apiFetch<GitHubWriteResponse>(filePath(slug), {
@@ -389,7 +390,7 @@ export async function upsertPage(
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err);
     if (message.includes("404")) {
-      return await createPage(title, body, author, targetBranch);
+      return await createPage(title, body, author, targetBranch, slug);
     }
     throw err;
   }
@@ -604,6 +605,11 @@ export async function getPullRequest(pullNumber: number): Promise<PullRequest> {
   return coreFetch<PullRequest>(`/pulls/${pullNumber}`);
 }
 
+/** Get the files changed in a PR */
+export async function getPullRequestFiles(pullNumber: number): Promise<{ filename: string; raw_url: string }[]> {
+  return coreFetch<{ filename: string; raw_url: string }[]>(`/pulls/${pullNumber}/files`);
+}
+
 /** Get the raw diff payload of a PR for the Red/Green viewer */
 export async function getPullRequestDiff(pullNumber: number): Promise<string> {
   return coreFetch<string>(`/pulls/${pullNumber}`, {
@@ -645,6 +651,7 @@ export interface WikiNotification {
   timestamp: string;
   branchName?: string;
   slug?: string;
+  proposedContent?: string;
 }
 
 function notifPath(email: string) {

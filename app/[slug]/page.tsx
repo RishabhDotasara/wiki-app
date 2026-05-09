@@ -16,7 +16,7 @@ export default async function ArticlePage({
   searchParams,
 }: {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ edit?: string; branch?: string }>;
+  searchParams: Promise<{ edit?: string; branch?: string; notifId?: string }>;
 }) {
   const p = await params;
   const sp = await searchParams;
@@ -32,11 +32,21 @@ export default async function ArticlePage({
 
   if (p.slug !== "new-article") {
     try {
-      const [page, mediaFiles] = await Promise.all([
-        getPage(p.slug, sp.branch),
-        (await import("@/lib/github")).listMediaFiles(p.slug)
+      let overrideContent = null;
+      if (sp.notifId && user?.email && isEditor) {
+        const notifications = await (await import("@/lib/github")).getUserNotifications(user.email);
+        const notif = notifications.find((n: any) => n.id === sp.notifId);
+        if (notif && notif.proposedContent) {
+          overrideContent = notif.proposedContent;
+        }
+      }
+
+      const [mediaFiles, page] = await Promise.all([
+        (await import("@/lib/github")).listMediaFiles(p.slug),
+        overrideContent ? Promise.resolve(null) : getPage(p.slug, sp.branch)
       ]);
-      rawMarkdown = page.body;
+      
+      rawMarkdown = overrideContent || (page ? page.body : "");
       const parsed = matter(rawMarkdown);
       frontmatter = parsed.data;
       contentBody = parsed.content;

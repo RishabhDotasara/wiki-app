@@ -43,8 +43,8 @@ export function ArticleEditor({
         const result = await saveArticleAction(title, content, tags, existingSlug);
         
         if (result.isQueued) {
-           alert("Your edit has been safely queued for an Admin to review and approve!");
-           router.push(`/${result.slug}`);
+           alert("Your edit has been submitted for review! You can track its status in the queue.");
+           router.push("/queue");
         } else {
            router.push(`/${result.slug}`);
         }

@@ -48,8 +48,8 @@ export default async function QueuePage() {
                     
                     {n.status === 'rejected' && n.slug && n.branchName && (
                       <div className="mt-3">
-                        <Button asChild size="sm" variant="outline" className="h-7 text-xs gap-2">
-                           <Link href={`/${n.slug}?edit=true&branch=${n.branchName}`}>
+                         <Button asChild size="sm" variant="outline" className="h-7 text-xs gap-2">
+                           <Link href={`/${n.slug}?edit=true&notifId=${n.id}`}>
                              <Pencil className="h-3 w-3" /> Revise & Re-submit
                            </Link>
                         </Button>

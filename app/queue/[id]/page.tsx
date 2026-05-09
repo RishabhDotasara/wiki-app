@@ -21,8 +21,9 @@ export default async function QueueDetailPage({ params }: { params: Promise<{ id
     const pr = await getPullRequest(pullNumber);
     await mergePullRequest(pullNumber, "Approved by Admin via Campuslores");
     
-    // Update Registry after merge
-    const slug = pr.title.replace('Suggested Edit: ', '').toLowerCase().replace(/[^a-z0-9]+/g, "-");
+    // Extract real slug from PR body (format: "Review changes for {slug}.")
+    const slugMatch = pr.body.match(/Review changes for ([^.]+)\./);
+    const slug = slugMatch ? slugMatch[1] : pr.title.replace('Suggested Edit: ', '').toLowerCase().replace(/[^a-z0-9]+/g, "-");
     try {
       const { getPage, updateRegistryEntry } = await import("@/lib/github");
       const { body } = await getPage(slug);
@@ -58,11 +59,39 @@ export default async function QueueDetailPage({ params }: { params: Promise<{ id
     const pr = await getPullRequest(pullNumber);
     
     if (comment) await commentOnPullRequest(pullNumber, `Admin Rejected: ${comment}`);
+
+    // Extract real slug from PR body as fallback
+    const slugMatch = pr.body.match(/Review changes for ([^.]+)\./);
+    let slug = slugMatch ? slugMatch[1] : pr.title.replace('Suggested Edit: ', '').toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, "");
+
+    // Fetch the proposed content from the branch BEFORE closing the PR
+    // (closing may auto-delete the branch, making it inaccessible)
+    let proposedContent = "";
+    try {
+      const { getPage, getPullRequestFiles } = await import("@/lib/github");
+      
+      // Get exact file touched by PR to get the bulletproof slug
+      const files = await getPullRequestFiles(pullNumber);
+      const mdFile = files.find(f => f.filename.endsWith('.md'));
+      
+      if (mdFile) {
+         // filename format is typically "wiki/my-slug.md"
+         const actualFilename = mdFile.filename.split('/').pop() || "";
+         slug = actualFilename.replace('.md', ''); // override with absolute truth
+      }
+
+      if (slug) {
+        const page = await getPage(slug, pr.head.ref);
+        proposedContent = page.body;
+      }
+    } catch (e) {
+      console.error("Failed to fetch proposed content before closing PR", e);
+    }
+
     await closePullRequest(pullNumber);
     
      const editorEmail = await getEditorEmailFromPR(pr.body);
      if (editorEmail) {
-        const slug = pr.title.replace('Suggested Edit: ', '').toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, "");
         await addNotification(editorEmail, {
            id: `notif-${Date.now()}`,
            status: 'rejected',
@@ -70,7 +99,8 @@ export default async function QueueDetailPage({ params }: { params: Promise<{ id
            comment: comment || "No reason provided.",
            timestamp: new Date().toISOString(),
            branchName: pr.head.ref,
-           slug: slug
+           slug: slug,
+           proposedContent: proposedContent || undefined
         });
      }
 
